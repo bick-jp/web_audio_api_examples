@@ -2,13 +2,16 @@
 <html>
 <head></head>
 <body>
-<h1>Play mp3</h1>
+<h1>Play mp3 with volume</h1>
 <button onclick="Play()">Play</button><br/>
 <button onclick="Stop()">Stop</button><br/>
+
+<input type="range" min="0" max="100" value="100" oninput="changeVolume(this);">Volume</p>
 
 <script type="text/javascript">
 
 var source;
+var gainNode;
 
 function Play() {
 
@@ -16,7 +19,7 @@ function Play() {
 	var context = new AudioContext();
 	
 	// Create a gain node.
-	var gainNode = context.createGain();
+	gainNode = context.createGain();
 	
 	var buffer = null;
 	source = context.createBufferSource();
@@ -43,11 +46,21 @@ function Play() {
 	gainNode.gain.value = 0.5;
 
 	source.start(0);
-}
+};
 
 function Stop() {
 	source.stop();
-}
+};
+
+// Refferring to 
+// http://webaudioapi.com/samples/volume/
+function changeVolume(element) {
+	var volume = element.value;
+	var fraction = parseInt(element.value) / parseInt(element.max);
+	// Let's use an x*x curve (x-squared) since simple linear (x) does not
+	// sound as good.
+	this.gainNode.gain.value = fraction * fraction;
+};
 </script>
 
 </body>
