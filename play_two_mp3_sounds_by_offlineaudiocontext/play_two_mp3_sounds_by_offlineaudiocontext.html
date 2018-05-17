@@ -44,7 +44,7 @@ function getData() {
       buffer_2.connect(offlineContext.destination);
       buffer_2.start();
 
-      play();
+      play(); // any better way?
 
     }, function(error){
       console.log('xhr2 rendering failed: ' + error);
