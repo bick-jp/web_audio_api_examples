@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+	<h1>offlineAudioContext example</h1>
+  <p>Play two mp3 sounds by offlineAudioContext</p>
+	<button onclick="getData()">Play</button>
+  <p><input type="range" min="0" max="100" value="100" oninput="changeVolume1(this);">Sound1 volume</p>
+  <p><input type="range" min="0" max="100" value="100" oninput="changeVolume2(this);">Sound2 volume</p>
+</body>
+<script>
+
+var gainNode1;
+var gainNode2;
+
+var source1;
+var source2;
+
+function getData() {
+  var context = new(window.AudioContext || window.webkitAudioContext) // Create an audio context
+  var offlineContext1 = new OfflineAudioContext(2,44100*40,44100);
+  var offlineContext2 = new OfflineAudioContext(2,44100*40,44100);
+
+  var buffer_1 = offlineContext1.createBufferSource();
+  var buffer_2 = offlineContext2.createBufferSource();
+
+  // Create an XML HTTP Request to collect your audio files
+  var xhr1 = new XMLHttpRequest();
+  var xhr2 = new XMLHttpRequest();
+  var audio_buffer_1, audio_buffer_2;
+
+  xhr1.open("GET","audio1.mp3", true);
+  xhr1.responseType = 'arraybuffer';
+  xhr1.onload = function() {
+    // Decode the audio data
+    context.decodeAudioData(xhr1.response, function(buffer) {
+      audio_buffer_1 = buffer;
+      buffer_1.buffer = audio_buffer_1;
+      buffer_1.connect(offlineContext1.destination);
+      buffer_1.start();
+
+      offlineContext1.startRendering().then(function(renderedBuffer){
+        console.log('Rendering completed successfully');
+
+        source1 = context.createBufferSource();
+        source1.buffer = renderedBuffer;
+        gainNode1 = context.createGain();
+
+        source1.connect(gainNode1);
+        gainNode1.connect(context.destination);
+
+      });
+
+    }, function(error){
+      console.log('xhr1 rendering failed: ' + error);
+    });
+  };
+
+  xhr2.open("GET","audio2.mp3", true);
+  xhr2.responseType = 'arraybuffer';
+  xhr2.onload = function() {
+    // Decode the audio data
+    context.decodeAudioData(xhr2.response, function(buffer) {
+      audio_buffer_2 = buffer;
+      buffer_2.buffer = audio_buffer_2;
+      buffer_2.connect(offlineContext2.destination);
+      buffer_2.start();
+
+      offlineContext2.startRendering().then(function(renderedBuffer){
+        console.log('Rendering completed successfully');
+
+        source2 = context.createBufferSource();
+        source2.buffer = renderedBuffer;
+        gainNode2 = context.createGain();
+
+        source2.connect(gainNode2);
+        gainNode2.connect(context.destination);
+
+        play(); // any better way?
+
+      });
+
+    }, function(error){
+      console.log('xhr2 rendering failed: ' + error);
+    });
+  };
+
+  xhr1.send();
+  xhr2.send();
+
+  var play = function() {
+      source1.start();
+      source2.start();
+  }
+}
+
+// Refferring to http://webaudioapi.com/samples/volume/
+function changeVolume1(element) {
+  var volume = element.value;
+  var fraction = parseInt(element.value) / parseInt(element.max);
+  // Let's use an x*x curve (x-squared) since simple linear (x) does not sound as good.
+  this.gainNode1.gain.value = fraction * fraction;
+};
+
+function changeVolume2(element) {
+  var volume = element.value;
+  var fraction = parseInt(element.value) / parseInt(element.max);
+  // Let's use an x*x curve (x-squared) since simple linear (x) does not sound as good.
+  this.gainNode2.gain.value = fraction * fraction;
+};
+
+
+</script>
+</html>
